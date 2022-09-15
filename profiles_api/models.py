@@ -3,6 +3,7 @@ from django.contrib.auth.models import AbstractBaseUser
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.models import BaseUserManager
 
+
 class UserProfileManager(BaseUserManager):
     """Manager for user profiles"""
     def create_user(self, email, name, password=None):
@@ -25,6 +26,7 @@ class UserProfileManager(BaseUserManager):
         user.save(using=self._db)
 
         return user
+
 
 class UserProfile(AbstractBaseUser, PermissionsMixin):
     """Database models for users in system"""
