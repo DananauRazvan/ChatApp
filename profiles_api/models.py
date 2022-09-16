@@ -60,6 +60,7 @@ class ProfileFeedItem(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
     )
+    destination = models.CharField(max_length=255)
     message = models.CharField(max_length=255)
     timestamp = models.DateTimeField(auto_now_add=True)
 
