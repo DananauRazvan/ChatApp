@@ -53,9 +53,8 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
         """Return string representation of our user"""
         return self.email
 
-
+"""
 class ProfileFeedItem(models.Model):
-    """Profile status update"""
     user_profile = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
@@ -65,5 +64,5 @@ class ProfileFeedItem(models.Model):
     timestamp = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        """Return the model as a string"""
         return self.message
+"""

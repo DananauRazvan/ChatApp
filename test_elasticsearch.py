@@ -7,11 +7,12 @@ print(res['_source'])
 
 body = {
     'from': 0,
-    'size': 0,
+    'size': 2,
     'query': {
         'match': {
             'message': 'Buna'
         }
     }
 }
-res2 = es.search(index='posts', )
+res2 = es.search(index='posts', body=body)
+print(res2)
