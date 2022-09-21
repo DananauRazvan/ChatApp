@@ -2,15 +2,18 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication, SessionAuthentication, BasicAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
-from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
 from profiles_api import serializers
 from profiles_api import models
 from profiles_api import permissions
+
+from elasticsearch import Elasticsearch
+from datetime import datetime
 
 
 class HelloApiView(APIView):
@@ -116,12 +119,38 @@ class UserLoginApiView(ObtainAuthToken):
 
 
 # class UserProfileFeedViewSet(viewsets.ModelViewSet):
-#     """Handle creating, reading and updating profile feed items"""
-#     authentication_classes = (TokenAuthentication,)
-#     serializer_class = serializers.ProfileFeedItemSerializer
-#     queryset = models.ProfileFeedItem.objects.all()
-#     permission_classes = (permissions.UpdateOwnStatus, IsAuthenticatedOrReadOnly)
+#      """Handle creating, reading and updating profile feed items"""
+#      authentication_classes = (TokenAuthentication,)
+#      serializer_class = serializers.ProfileFeedItemSerializer
+#      queryset = models.ProfileFeedItem.objects.all()
+#      permission_classes = (permissions.UpdateOwnStatus, IsAuthenticatedOrReadOnly)
 #
-#     def perform_create(self, serializer):
-#         """Sets the user profile to the logged in user"""
-#         serializer.save(user_profile=self.request.user)
+#      def perform_create(self, serializer):
+#          """Sets the user profile to the logged in user"""
+#          serializer.save(user_profile=self.request.user)
+
+
+class MessageAPIView(APIView):
+    """Handle sending/getting messages between users"""
+    serializer_class = serializers.MessageSerializer
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, format=None):
+        """Return from Elasticsearch"""
+        username = str(request.user.name)
+
+        es = Elasticsearch('http://localhost:9200')
+        body = {
+            'from': 0,
+            'size': 2,
+            'query': {
+                'match': {
+                    'destination': username.lower()
+                }
+            }
+        }
+        res = es.search(index='posts', body=body)
+
+        # return Response(f'Hello, {username.lower()}!')
+        return Response(res['hits']['hits'])

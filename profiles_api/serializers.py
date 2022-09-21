@@ -28,11 +28,15 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
         return user
 
-"""
-class ProfileFeedItemSerializer(serializers.ModelSerializer):
-    # Serializes profile feed item
-    class Meta:
-        model = models.ProfileFeedItem
-        fields = ('id', 'user_profile', 'destination', 'message', 'timestamp')
-        extra_kwargs ={'user_profile': {'read_only': True}}
-"""
+
+# class ProfileFeedItemSerializer(serializers.ModelSerializer):
+#     # Serializes profile feed item
+#     class Meta:
+#         model = models.ProfileFeedItem
+#         fields = ('id', 'user_profile', 'destination', 'message', 'timestamp')
+#         extra_kwargs ={'user_profile': {'read_only': True}}
+
+
+class MessageSerializer(serializers.Serializer):
+    destination = serializers.CharField(max_length=255)
+    message = serializers.CharField(max_length=1000)
