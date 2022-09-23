@@ -4,7 +4,9 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication, BasicAuthentication
 from rest_framework import filters
+from rest_framework.authtoken import views
 from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.authtoken.models import Token
 from rest_framework.settings import api_settings
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 
@@ -116,7 +118,7 @@ class UserProfileViewSet(viewsets.ModelViewSet):
 class UserLoginApiView(ObtainAuthToken):
     """Handle creating user authentication token"""
     renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
-
+    authentication_classes = (TokenAuthentication,)
 
 # class UserProfileFeedViewSet(viewsets.ModelViewSet):
 #      """Handle creating, reading and updating profile feed items"""
@@ -133,7 +135,7 @@ class UserLoginApiView(ObtainAuthToken):
 class MessageAPIView(APIView):
     """Handle sending/getting messages between users"""
     serializer_class = serializers.MessageSerializer
-    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    authentication_classes = (TokenAuthentication,)
     permission_classes = [IsAuthenticated]
 
     def get(self, request, format=None):
@@ -143,7 +145,7 @@ class MessageAPIView(APIView):
         es = Elasticsearch('http://localhost:9200')
         body = {
             'from': 0,
-            'size': 2,
+            'size': 10000,
             'query': {
                 'match': {
                     'destination': username.lower()
@@ -152,5 +154,34 @@ class MessageAPIView(APIView):
         }
         res = es.search(index='posts', body=body)
 
-        # return Response(f'Hello, {username.lower()}!')
         return Response(res['hits']['hits'])
+
+    def post(self, request, format=None):
+        """Send to Elasticsearch"""
+        es = Elasticsearch('http://localhost:9200')
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            destination = serializer.validated_data.get('destination')
+            destination_exists = models.UserProfile.objects.filter(name=destination).exists()
+            message = serializer.validated_data.get('message')
+
+            if destination_exists:
+                doc = {
+                    'source': str(request.user.name),
+                    'destination': destination,
+                    'message': message,
+                    'timestamp': 124343253
+                }
+                res = es.index(index='posts', body=doc)
+                return Response(res)
+            else:
+                return Response(
+                    'User doesnt exist!',
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        else:
+            return Response(
+                serializer.errors,
+                status=status.HTTP_400_BAD_REQUEST
+            )
